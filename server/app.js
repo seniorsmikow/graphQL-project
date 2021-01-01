@@ -8,8 +8,7 @@ const app = express();
 
 const PORT = 3005;
 
-mongoose.connect('mongodb+srv://Ilya:k1k4k88hail@cluster0.lfpic.mongodb.net/movies', { useUnifiedTopology: true, useNewUrlParser: true });
-//mongoose.connect('... my MongoDB URI ...', { useUnifiedTopology: true });
+mongoose.connect('... my MongoDB URI ...', { useUnifiedTopology: true });
 
 app.use('/graphql', graphqlHTTP({
     schema,
