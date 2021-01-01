@@ -23,7 +23,7 @@ const MovieType = new GraphQLObjectType({
         director: {
             type: DirectorType,
             resolve: (parent, args) => {
-                return Directors.findById(parent.directorId);
+                return Directors.findById(parent.directorId); // findById и find методы библиотеки mongoose
             }
         }
     })
@@ -38,11 +38,12 @@ const DirectorType = new GraphQLObjectType({
         movies: {
             type: new GraphQLList(MovieType),
             resolve: (parent, args) => {
-                return movies.filter(movie => movie.directorId == parent.id);
+                return Movies.find({directorId: parent.id});
             }
         }
     })
 });
+
 
 const Query = new GraphQLObjectType({
     name: 'Query',
@@ -51,7 +52,7 @@ const Query = new GraphQLObjectType({
             type: MovieType,
             args: {id: {type: GraphQLID}},
             resolve: (parent, args) => {
-                return Movies.findById(args.id); // используем == сравнение, чтобы воспользоваться GraphQLID
+                return Movies.findById(args.id); 
             }
         },
         director: {
@@ -64,7 +65,7 @@ const Query = new GraphQLObjectType({
         movies: {
             type: new GraphQLList(MovieType),
             resolve: () => {
-                return Movies.find({});
+                return Movies.find({}); // если необходимо вернуть список всех фильмов
             }
         },
         directors: {
@@ -76,6 +77,96 @@ const Query = new GraphQLObjectType({
     }
 });
 
+const Mutation =  new GraphQLObjectType({
+    name: 'Mutation',
+    fields: {
+        addDirector: {
+            type: DirectorType,
+            args: {
+                name: {type: GraphQLString},
+                age: {type: GraphQLInt},
+            },
+            resolve: (_, args) => {
+                const director = new Directors({
+                    name: args.name,
+                    age: args.age
+                });
+                return director.save();
+            }
+        },
+        addMovie: {
+            type: MovieType,
+            args: {
+                name: {type: GraphQLString},
+                genre: {type: GraphQLString},
+                year: {type: GraphQLString},
+                directorId: {type: GraphQLID}
+            },
+            resolve: (_, args) => {
+                const movie = new Movies({
+                    name: args.name,
+                    genre: args.genre,
+                    year: args.year,
+                    directorId: args.directorId
+                });
+                return movie.save();
+            }
+        },
+        deleteDirector: {
+            type: DirectorType,
+            args: {
+                id: {type: GraphQLID},
+            },
+            resolve: (parent, args) => {
+                return Directors.findByIdAndDelete(args.id);
+            }
+        },
+        deleteMovie: {
+            type: MovieType,
+            args: {
+                id: {type: GraphQLID},
+            },
+            resolve: (parent, args) => {
+                return Movies.findByIdAndDelete(args.id);
+            }
+        },
+        updateDirector: {
+            type: DirectorType,
+            args: {
+                id: {type: GraphQLID},
+                name: {type: GraphQLString},
+                age: {type: GraphQLInt},
+            },
+            resolve: (parent, args) => {
+                return Directors.findByIdAndUpdate(
+                    args.id,
+                    { $set: { name: args.name, age: args.age}},
+                    { new: true }
+                );
+            }
+        },
+        updateMovie: {
+            type: MovieType,
+            args: {
+                id: {type: GraphQLID},
+                name: {type: GraphQLString},
+                genre: {type: GraphQLString},
+                year: {type: GraphQLString},
+                directorId: {type: GraphQLString}
+            },
+            resolve: (parent, args) => {
+                return Movies.findByIdAndUpdate(
+                    args.id,
+                    { $set: { name: args.name, genre: args.genre, year: args.year, directorId: args.directorId }},
+                    { new: true }
+                );
+            }
+        }
+    }
+
+});
+
 module.exports = new GraphQLSchema({
-    query: Query
+    query: Query,
+    mutation: Mutation
 });
